@@ -1,35 +1,60 @@
-Task 1: The Five V's of Big Data
-Variety
-•	Mixed data formats
-•	Sensor types
 
-Velocity
-•	Real time decisions rely on low latency process
-•	Overload can lead to system bottlenecks, traffic congestion or safety risk
-Veracity
-•	data_source_veracity It represents a confidence level in reliability of the data
-•	It supports the veracity aspect by quantifying trust in the data
-•	Potential problem is that one record has a null veracity (sensor ID: "TC-05-GER") and another is missing it entirely, indicating questionable data trustworthiness
-Volume
-•	Storage and data lifestyle management
-Value
-•	deliver real value
-•	Use Case: City planners can use traffic count and noise data to optimize road layouts or adjust signal timings to reduce congestion and noise pollution.
 
-Task 2: Data Quality Assessment
+# Smart Germiston Data Analysis
 
-1.Data Quality :the completeness ,consistency reliability and accuracy of data so that it is good for indented use in decision making
+Welcome to the Smart City Data Analysis project! This submission includes an analysis of sensor data from Germiston using Big Data principles, data quality assessment, and data governance best practices.
 
-•  Inconsistent Timestamps
-•	Some timestamps use ISO format (2025-07-29T08:45:10Z), others use 29/07/2025 08:47:00 or July 29 2025, 09:15:03 AM.
-•	Problem: This inconsistency affects sorting, querying, and integration with time-series systems.
-•   Missing or Null Values
-•	"value": null in a traffic sensor, and missing data_source_veracity.
-•	Problem: Incomplete data can lead to wrong analytics or skipped records.
-•  Invalid Sensor Readings
-•	AQI of -10 is invalid; air quality indices must be ≥ 0.
-•	Problem: Results in false alerts or misinformed decision-making.
-3 bonus question
+---
+
+## Task 1: The Five V's of Big Data
+
+### 1. Variety
+- Mixed data formats: timestamps appear in multiple formats (`ISO 8601`, `DD/MM/YYYY`, full-text).
+- Multiple sensor types: air quality, traffic count, temperature, humidity, noise level, and rainfall.
+
+### 2. Velocity
+- Real-time decisions rely on low-latency processing.
+- Overload can lead to system bottlenecks, traffic congestion, or safety risks if not managed properly.
+
+### 3. Veracity
+- The `data_source_veracity` field represents a **confidence level** in the reliability of the data.
+- It supports the **veracity** trait by quantifying trust in the data.
+- ⚠️ **Problem**: One record (`sensor_id: "TC-05-GER"`) has a `null` value for veracity, and another has no veracity field at all.
+
+### 4. Volume
+- With 10,000 sensors reporting every 5 seconds for a year, we would face challenges like:
+  - High storage requirements
+  - Processing time
+  - Lifecycle management of huge datasets
+
+### 5. Value
+- The data has real value for both citizens and city administrators.
+- **Use Case**: City planners can use traffic count and noise data to optimize road layouts or adjust traffic signal timings to reduce congestion and pollution.
+
+---
+
+## Task 2: Data Quality Assessment
+
+### 1. Definition of Data Quality
+Data quality refers to the **completeness**, **consistency**, **reliability**, and **accuracy** of data so that it is fit for its intended use in decision-making.
+
+### 2. Identified Data Quality Issues
+
+#### a) Inconsistent Timestamps
+- Formats used: ISO 8601, `29/07/2025 08:47:00`, and `July 29 2025, 09:15:03 AM`.
+- ⚠️ **Problem**: Affects sorting, querying, and time-based analysis.
+
+#### b) Missing or Null Values
+- Example: `"value": null` in a traffic sensor, and missing `data_source_veracity` field.
+- ⚠️ **Problem**: May cause analytics errors or incomplete insights.
+
+#### c) Invalid Sensor Readings
+- Example: AQI value of `-10`, which is outside the valid range.
+- ⚠️ **Problem**: Can lead to false alerts or bad decision-making.
+
+### 3. Bonus: Data Validation Code (Python)
+
+```python
 import re
 from datetime import datetime
 
@@ -40,7 +65,6 @@ def is_valid_iso8601(ts):
         datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
         return True
     except ValueError:
-        # If parsing fails  return False
         return False
 
 # Function to check if a value can be converted to a float (i.e., it's a number)
@@ -49,29 +73,28 @@ def is_number(val):
         float(val)
         return True
     except (ValueError, TypeError):
-        # If it is not a number return False
         return False
 
 # Main function to validate a list of sensor data records
 def validate_data(records):
     flagged = []  # List to store invalid records
     for record in records:
-        # Get the timestamp from the record (or empty string if missing)
         ts = record.get("timestamp", "")
-        # Get the sensor value from the 'data' object
         val = record["data"].get("value", None)
 
-        # Check for two conditions:
-        # 1. Invalid timestamp format
-        # 2. Non-numeric value
+        # Check for invalid timestamp or non-numeric value
         if not is_valid_iso8601(ts) or not is_number(val):
-            flagged.append(record)  # Add invalid record to the flagged list
+            flagged.append(record)
+    return flagged
+````
 
-    return flagged  # Return the list of records that failed validation
+---
 
+## Task 3: Data Governance & Security
 
-Task 3: Data Governance & Security
-1. Access Control
+### 1. Access Control (Modified JSON with Access Level)
+
+```json
 {
   "sensor_id": "AQ-01-GER",
   "timestamp": "2025-07-29T08:45:10Z",
@@ -80,19 +103,29 @@ Task 3: Data Governance & Security
   "data_source_veracity": 0.95,
   "access_level": "Internal"
 }
+```
 
-2.Breach Implications
-1.	Business Loss
-•	A rival logistics company could optimize routes faster giving them unfair competitive advantage.
-2.	Reputational Damage & Legal Risk
-•	Citizens may lose trust in the platform.
-•	Potential violation of the POPI Act if personal or restricted data was mishandled.
-3. Data access levels should be defined by a Data Governance Officer or Chief Data Officer not a developer or project manager.
-•	This person knows:
-•	Compliance requirements 
-•	Ethical handling of data.
-•	Balancing transparency with security.
-•	They enforce data governance frameworks ensuring consistency, accountability, and auditability across the system.
+### 2. Breach Implications
 
+#### a) Business Loss
 
-2
+* A rival logistics company could use real-time traffic data to optimize delivery routes, giving them an unfair advantage.
+
+#### b) Reputational Damage & Legal Risk
+
+* Citizens may lose trust in the system.
+* Potential violation of the **POPI Act** (Protection of Personal Information Act) if sensitive or restricted data is mishandled.
+
+### 3. Authority & Control
+
+* **Access levels should be defined by**:
+
+  * A **Chief Data Officer (CDO)** or **Data Governance Officer**.
+* **Why not a developer or project manager?**
+
+  * These roles require understanding of:
+
+    * Legal compliance and privacy laws
+    * Ethical data handling
+    * Enforcement of governance frameworks for consistency, transparency, and accountability.
+
